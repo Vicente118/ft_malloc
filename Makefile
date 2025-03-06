@@ -10,7 +10,7 @@ LINK = libft_malloc.so
 
 MAIN = main.c
 
-EXEC = test
+EXEC = malloc
 
 CC = gcc
 
@@ -36,8 +36,8 @@ $(NAME) : $(OBJS) $(LIBFT)
 $(LIBFT) :
 	make bonus -C libft
 
-test :
-	$(CC) $(MAIN) -o $(EXEC) -L. -lft_malloc -L./libft -lft
+exec :
+	$(CC) $(MAIN) -g -o $(EXEC) -L. -lft_malloc -L./libft -lft
 
 clean :
 	$(RM) $(OBJS)
@@ -46,4 +46,4 @@ fclean : clean
 	# make fclean -C libft
 	$(RM) $(NAME) $(LINK) $(EXEC)
 
-re : fclean all
+re : fclean all exec

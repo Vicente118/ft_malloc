@@ -8,12 +8,9 @@
 # include <sys/resource.h>
 # include <pthread.h>
 
-# define HEAP_SHIFT(start) ((void *)start + sizeof(heap))
-# define BLOCK_SHIFT(start) ((void *)start + sizeof(block))
-# define BLOCK_SIZE sizeof(struct block)
-# define ALIGNEMENT    16
+# define ALIGNEMENT    8
 # define TINY_MAX      128
-# define SMALL_MAX     1024
+# define SMALL_MAX     512
 # define MAP_ANONYMOUS 0x20
 # define PAGE_SIZE  sysconf(_SC_PAGESIZE) // In Linux for x86-64 processors (4096), can be obtained with sysconf(_SC_PAGESIZE) in C or getconf PAGE_SIZE in Bash
 
@@ -26,8 +23,8 @@ long	sysconf(int name);
 
 typedef enum bool
 {
-	true = 0,
-	false = 1
+	false = 0,
+	true  = 1
 }	bool;
 
 enum
@@ -43,17 +40,19 @@ typedef struct s_zone t_zone;
 struct s_block
 {
  	size_t          size;		// Size of allocated block
-	bool            free;		// Tells if the block is free to use or not (used = 1, free = 0)
+	bool            allocated;		// Tells if the block is free to use or not (used = 1, free = 0)
 	t_block         *next; 		// Pointer to the next block
 	t_block	        *prev;		// Pointer to the prev block
 };
 
 struct s_zone
 {
-    int             type;       // Type of zone : TINY (0), SMALL (1), LARGE (2)
+    int             type;       // Type of zone : TINY (0), SMALL (1), LARGE (, SMALL (1), LARGE (2)2)
+	size_t			size;
   	size_t		    total_size;	// Total size of the zone
   	t_block		    *blocks;	// List of block in this zone
 	t_zone	        *next;		// Pointer to the next zone
+	// t_zone			*prev;
 };
 
 

@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "libft.h": "c"
+        "*.asm": "nasm",
+        "libft.h": "c",
+        "stdalign.h": "c"
     }
 }

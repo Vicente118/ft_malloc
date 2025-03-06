@@ -6,7 +6,7 @@ static pthread_mutex_t  g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static size_t	align_size(size_t size)
 {
-	return (size + 15) & ~15;
+	return (size + ALIGNEMENT - 1) & ~(ALIGNEMENT - 1);
 }
 
 
@@ -16,7 +16,7 @@ static t_block	*find_block(t_zone *zone, size_t size)
 
 	while (block != NULL)
 	{
-	 	if (block->free != 0 && block->size >= size)
+	 	if (block->allocated == false && block->size >= size)
 		{
 			return block;
 		}
@@ -59,8 +59,8 @@ static t_zone	*create_new_zone(int type, size_t size)
 
     t_block *block = (t_block *)((char *)ptr + sizeof(t_zone));   // We are casting ptr into (char *) so we can increment byte by byte
 
-    block->size  = zone_size - sizeof(t_zone) - sizeof(t_block);
-    block->free  = 1;
+    block->size      = zone_size - sizeof(t_zone) - sizeof(t_block);
+    block->allocated = false;
     block->next  = NULL;
     block->prev  = NULL;
 
@@ -69,14 +69,78 @@ static t_zone	*create_new_zone(int type, size_t size)
     return zone;
 }
 
+static void    print_zone_type(t_zone *zone)
+{
+    switch(zone->type)
+    {
+        case 0: 
+            printf("%s","TINY : ");
+            break;
+        case 1:
+            printf("%s","SMALL : ");
+            break;
+        case 2:
+            printf("%s","LARGE : ");
+    }
 
-void    *ft_malloc(size_t size)
+    printf("%p\n\n", zone);
+}
+
+static t_zone  *reverse_list(t_zone *head) 
+{
+    t_zone  *prev = NULL, *current = head, *next = NULL;
+
+    while (current != NULL) 
+    {
+        next = current->next; 
+        current->next = prev; 
+        prev = current;       
+        current = next;       
+    }
+
+    return prev;
+}
+
+void    show_alloc_mem()
+{
+    size_t  allocated_bytes = 0;
+
+    t_zone  *tmp_zone = reverse_list(g_zones);
+
+    while (tmp_zone)
+    {
+        t_block *tmp_block = tmp_zone->blocks;     
+    
+        print_zone_type(tmp_zone);
+
+        while (tmp_block)
+        {
+            void    *offset_address = (void *)((char *)tmp_block + tmp_block->size);
+
+            if (tmp_block->allocated == true)
+            {
+                allocated_bytes += tmp_block->size;
+
+                printf("%p - %p : %lu bytes\n", tmp_block, offset_address, tmp_block->size);
+            }
+
+            tmp_block = tmp_block->next;
+        }
+
+        tmp_zone = tmp_zone->next;
+    }
+
+    printf("Total : %lu bytes\n", allocated_bytes);
+}
+
+
+void    *malloc(size_t size)
 {
     pthread_mutex_lock(&g_mutex);
-    
+
     int type;
 
-	if (size <= 0)
+	if ((ssize_t)size <= 0)
 	{
         pthread_mutex_unlock(&g_mutex);
 		return NULL;
@@ -125,16 +189,16 @@ void    *ft_malloc(size_t size)
     {
         t_block *new_block = (t_block *)((char *)found_block + sizeof(t_block) + size);
         
-        new_block->size   = found_block->size - size - sizeof(t_block);
-        new_block->free   = 1;
-        new_block->next   = found_block->next;
-        new_block->prev   = found_block;
+        new_block->size      = found_block->size - size - sizeof(t_block);
+        new_block->allocated = false;
+        new_block->next      = found_block->next;
+        new_block->prev      = found_block;
 
         found_block->next = new_block;
         found_block->size = size;
     }
 
-    found_block->free = 0;
+    found_block->allocated = true;
 
     pthread_mutex_unlock(&g_mutex);
 
@@ -163,3 +227,29 @@ void    *ft_malloc(size_t size)
 // +---------------------+
 // | ... (espace libre)  |
 // +---------------------+
+//
+
+/*
+Simplistically malloc and free work like this:
+
+malloc provides access to a process's heap. The heap is a construct in the C core library (commonly libc) that allows objects to obtain exclusive access to some space on the process's heap.
+
+Each allocation on the heap is called a heap cell. This typically consists of a header that hold information on the size of the cell as well as a pointer to the next heap cell. This makes a heap effectively a linked list.
+
+When one starts a process, the heap contains a single cell that contains all the heap space assigned on startup. This cell exists on the heap's free list.
+
+When one calls malloc, memory is taken from the large heap cell, which is returned by malloc. The rest is formed into a new heap cell that consists of all the rest of the memory.
+
+When one frees memory, the heap cell is added to the end of the heap's free list. Subsequent malloc's walk the free list looking for a cell of suitable size.
+
+As can be expected the heap can get fragmented and the heap manager may from time to time, try to merge adjacent heap cells.
+
+When there is no memory left on the free list for a desired allocation, malloc calls brk or sbrk which are the system calls requesting more memory pages from the operating system.
+
+Now there are a few modification to optimize heap operations.
+
+    For large memory allocations (typically > 512 bytes, the heap manager may go straight to the OS and allocate a full memory page.
+    The heap may specify a minimum size of allocation to prevent large amounts of fragmentation.
+    The heap may also divide itself into bins one for small allocations and one for larger allocations to make larger allocations quicker.
+    There are also clever mechanisms for optimizing multi-threaded heap allocation.
+*/
