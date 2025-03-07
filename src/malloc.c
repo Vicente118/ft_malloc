@@ -1,10 +1,10 @@
-#include "ft_malloc.h"
+#include "malloc.h"
 
-static t_zone	       *g_zones = NULL;
+t_zone	*g_zones = NULL;
+
 static pthread_mutex_t  g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-
-static size_t	align_size(size_t size)
+static size_t	align_size(size_t size)   // Useful for performance because CPU reads bytes 8 by 8.
 {
 	return (size + ALIGNEMENT - 1) & ~(ALIGNEMENT - 1);
 }
@@ -61,11 +61,10 @@ static t_zone	*create_new_zone(int type, size_t size)
 
     block->size      = zone_size - sizeof(t_zone) - sizeof(t_block);
     block->allocated = false;
-    block->next  = NULL;
-    block->prev  = NULL;
+    block->next      = NULL;
+    block->prev      = NULL;
 
     zone->blocks = block;
-
     return zone;
 }
 
@@ -74,28 +73,28 @@ static void    print_zone_type(t_zone *zone)
     switch(zone->type)
     {
         case 0: 
-            printf("%s","TINY : ");
+            printf("%s%s", BGREEN, "TINY : ");
             break;
         case 1:
-            printf("%s","SMALL : ");
+            printf("%s%s", BGREEN, "SMALL : ");
             break;
         case 2:
-            printf("%s","LARGE : ");
+            printf("%s%s", BGREEN, "LARGE : ");
     }
 
-    printf("%p\n\n", zone);
+    printf("%p%s\n", zone, RESET);
 }
 
-static t_zone  *reverse_list(t_zone *head) 
+t_zone  *reverse_list(t_zone *head) 
 {
     t_zone  *prev = NULL, *current = head, *next = NULL;
 
     while (current != NULL) 
     {
-        next = current->next; 
+        next          = current->next; 
         current->next = prev; 
-        prev = current;       
-        current = next;       
+        prev          = current;       
+        current       = next;       
     }
 
     return prev;
@@ -128,11 +127,25 @@ void    show_alloc_mem()
         }
 
         tmp_zone = tmp_zone->next;
+
+        printf("\n");
     }
 
-    printf("Total : %lu bytes\n", allocated_bytes);
+    printf("%sTotal : %lu bytes%s\n", BMAGENTA, allocated_bytes, RESET);
 }
 
+void    fragment_block(t_block *found_block, size_t size)
+{
+    t_block *new_block   = (t_block *)((char *)found_block + sizeof(t_block) + size);
+    
+    new_block->size      = found_block->size - size - sizeof(t_block);
+    new_block->allocated = false;
+    new_block->next      = found_block->next;
+    new_block->prev      = found_block;
+
+    found_block->next    = new_block;
+    found_block->size    = size;
+}
 
 void    *malloc(size_t size)
 {
@@ -172,7 +185,7 @@ void    *malloc(size_t size)
 		zone = zone->next;
 	}
 
-/// If no blocks are found, create a new zone ///
+/// If no blocks are found or no zone has been created, create a new zone ///
 
     if (found_block == NULL)
     {
@@ -187,15 +200,7 @@ void    *malloc(size_t size)
 
     if (found_block->size > size + sizeof(t_block))
     {
-        t_block *new_block = (t_block *)((char *)found_block + sizeof(t_block) + size);
-        
-        new_block->size      = found_block->size - size - sizeof(t_block);
-        new_block->allocated = false;
-        new_block->next      = found_block->next;
-        new_block->prev      = found_block;
-
-        found_block->next = new_block;
-        found_block->size = size;
+        fragment_block(found_block, size);
     }
 
     found_block->allocated = true;

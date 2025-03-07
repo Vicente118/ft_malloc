@@ -18,14 +18,14 @@ CFLAGS = -Werror -Wall -Wextra -fPIC
 
 RM = rm -rf
 
-SRCS = src/ft_malloc.c
+SRCS = src/malloc.c src/free.c
 
 OBJS = $(SRCS:.c=.o)
 
 all : $(NAME)
 
 $(NAME) : $(OBJS) $(LIBFT)
-	$(CC) -shared -o $(NAME) $(OBJS) -L./libft -lft
+	$(CC) -shared -g -o $(NAME) $(OBJS) -L./libft -lft
 	$(RM) $(LINK)
 	ln -s $(NAME) $(LINK)
 	export LD_LIBRARY_PATH=.

@@ -1,16 +1,18 @@
-#include "src/ft_malloc.h"  // Ajout de l'en-tête
+#include "src/malloc.h"
 #include "libft/libft.h"
 #include <stdalign.h>
 
 void    *alloc_and_set_value(size_t size, int value)
 {
     char    *str = malloc(size);
+    
     if (!str)
     {
         printf("Malloc failed\n");
         return(NULL);
     }
-    ft_memset(str, value, size);
+
+    ft_memset(str, value, size - 1);
     str[size] = '\0';   
 
     return str;
@@ -27,29 +29,26 @@ int main(int argc, char **argv)
     int     A   = 'A';
     int     dot = '.';
     char    *str;
-
-    if (!alloc_and_set_value(24444344, A))
+   
+    if (!(str = alloc_and_set_value(1, A)))
     {
         return 1;
     }
 
-    if (!alloc_and_set_value(84444344, A))
-    {
-        return 1;
-    }
+    // if (!(alloc_and_set_value(12, A)))
+    // {
+    //     return 1;
+    // }
 
-    if (!alloc_and_set_value(37443425, A))
-    {
-        return 1;
-    }
-
-    if (!alloc_and_set_value(444488347, A))
-    {
-        return 1;
-    }
+    // if (!(alloc_and_set_value(25, A)))
+    // {
+    //     return 1;
+    // }
 
     show_alloc_mem();
 
+    free(str);
+    
     return 0;
 } 
 
