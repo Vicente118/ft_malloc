@@ -45,6 +45,7 @@ static t_zone	*create_new_zone(int type, size_t size)
 
     if (ptr == (void *)-1)
     {
+        printf("Error from mmap syscall\n");
         return NULL;
     }
 

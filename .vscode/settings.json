@@ -2,6 +2,7 @@
     "files.associations": {
         "*.asm": "nasm",
         "libft.h": "c",
-        "stdalign.h": "c"
+        "stdalign.h": "c",
+        "malloc.h": "c"
     }
 }

@@ -1,6 +1,29 @@
 #include "malloc.h"
 
+int    erase_block(void *ptr, t_zone *zone)
+{
+    t_block *tmp_block = zone->blocks;
 
+    if (ptr == (void *)((char *)tmp_block + sizeof(t_block)))
+    {
+        if (tmp_block->next != NULL)
+        {
+            zone->blocks    = tmp_block->next;
+            tmp_block->next = NULL;
+        }
+    }    
+
+    while (ptr != (void *)((char *)tmp_block + sizeof(t_block)))
+    {
+        if (tmp_block->next == NULL)
+        {
+            return -1;
+        }
+        tmp_block = tmp_block->next;
+    }
+
+    return 0;
+}
 
 int    munmap_if_free(void *ptr, t_zone  *zone)
 {

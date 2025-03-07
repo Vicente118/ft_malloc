@@ -1,6 +1,5 @@
 #include "src/malloc.h"
 #include "libft/libft.h"
-#include <stdalign.h>
 
 void    *alloc_and_set_value(size_t size, int value)
 {
