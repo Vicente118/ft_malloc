@@ -3,7 +3,7 @@
 
 void    *alloc_and_set_value(size_t size, int value)
 {
-    char    *str = malloc(size);
+    char    *str = malloc(size + 1);
     
     if (!str)
     {
@@ -19,34 +19,28 @@ void    *alloc_and_set_value(size_t size, int value)
 
 int main(int argc, char **argv)
 {
-    if (argc <= 1)
-    {
-        printf("Enter at least 1 argument to ./malloc\n");
-        return 1;
-    }
-
     int     A   = 'A';
     int     dot = '.';
     char    *str;
    
-    if (!(str = alloc_and_set_value(1, A)))
+    if (!(str = alloc_and_set_value(143662, A)))
     {
         return 1;
     }
 
-    // if (!(alloc_and_set_value(12, A)))
-    // {
-    //     return 1;
-    // }
+    if (!(alloc_and_set_value(126660, A)))
+    {
+        return 1;
+    }
 
-    // if (!(alloc_and_set_value(25, A)))
-    // {
-    //     return 1;
-    // }
+    if (!(alloc_and_set_value(5666600, A)))
+    {
+        return 1;
+    }
 
     show_alloc_mem();
 
-    free(str);
+    // free(str);
     
     return 0;
 } 

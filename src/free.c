@@ -51,6 +51,8 @@ int    munmap_if_free(void *ptr, t_zone  *zone)
 
 void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->blocks + sizeof(t_block))
 {
+    pthread_mutex_lock(&g_mutex);
+
     if (ptr == NULL)
     {
         return ;
@@ -64,6 +66,8 @@ void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->
     {
         return ;
     }
+
+    pthread_mutex_unlock(&g_mutex);
 }
 
 

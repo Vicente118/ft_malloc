@@ -1,8 +1,8 @@
 #include "malloc.h"
 
-t_zone	*g_zones = NULL;
+t_zone	       *g_zones = NULL;
 
-static pthread_mutex_t  g_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static size_t	align_size(size_t size)   // Useful for performance because CPU reads bytes 8 by 8.
 {
@@ -13,33 +13,58 @@ static size_t	align_size(size_t size)   // Useful for performance because CPU re
 static t_block	*find_block(t_zone *zone, size_t size)
 {
 	t_block		*block = zone->blocks;
+    t_block     *best_fit = NULL;
 
 	while (block != NULL)
 	{
 	 	if (block->allocated == false && block->size >= size)
 		{
-			return block;
+            if (block->size == size)   // If exact same size block found, function returns it
+            {
+			    return block;
+            }
+
+            if (best_fit == NULL || block->size < best_fit->size)  // Try to find the block with the best fit with the size
+            {
+                best_fit = block;
+            }
 		}
+
 		block = block->next;
 	}
-	return NULL;
+
+	return best_fit;
 }
 
-
-static t_zone	*create_new_zone(int type, size_t size)
+static size_t	get_optimal_zone_size(int type, size_t size)
 {
     size_t page_size = PAGE_SIZE;
     size_t zone_size;
 
-    if (type == LARGE)
+    switch (type)
     {
-        zone_size = align_size(size + sizeof(t_zone) + sizeof(t_block));
+        case TINY:                              
+            zone_size = (sizeof(t_block) + TINY_MAX) * MIN_ALLOC_PER_ZONE + sizeof(t_zone);  // Size for 128 allocations for this zone
+            zone_size = (zone_size + page_size - 1) & ~(page_size - 1);
+            break;
+
+        case SMALL:
+            zone_size = (sizeof(t_block) + SMALL_MAX) * MIN_ALLOC_PER_ZONE + sizeof(t_zone);
+            zone_size = (zone_size + page_size - 1) & ~(page_size - 1);
+            break;
+
+        case LARGE:
+            zone_size = size + sizeof(t_block) + sizeof(t_zone);
+            zone_size = (zone_size + page_size - 1) & ~(page_size - 1);
+            break;
     }
 
-    else
-    {
-        zone_size = page_size * 100; // No need t align because it's already a PAGE_SIZE multiple
-    }
+    return zone_size;
+}
+
+static t_zone	*create_new_zone(int type, size_t size)
+{
+    size_t zone_size = get_optimal_zone_size(type, size);
 
     void *ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
@@ -103,6 +128,8 @@ t_zone  *reverse_list(t_zone *head)
 
 void    show_alloc_mem()
 {
+    pthread_mutex_lock(&g_mutex);
+
     size_t  allocated_bytes = 0;
 
     t_zone  *tmp_zone = reverse_list(g_zones);
@@ -133,6 +160,8 @@ void    show_alloc_mem()
     }
 
     printf("%sTotal : %lu bytes%s\n", BMAGENTA, allocated_bytes, RESET);
+
+    pthread_mutex_unlock(&g_mutex);
 }
 
 void    fragment_block(t_block *found_block, size_t size)
@@ -144,6 +173,11 @@ void    fragment_block(t_block *found_block, size_t size)
     new_block->next      = found_block->next;
     new_block->prev      = found_block;
 
+    if (new_block->next)  // If not the last block in list make the next prev pointer point on the right block
+    {
+        new_block->next->prev = new_block;
+    }
+
     found_block->next    = new_block;
     found_block->size    = size;
 }
@@ -153,7 +187,7 @@ void    *malloc(size_t size)
     pthread_mutex_lock(&g_mutex);
 
     int type;
-
+    
 	if ((ssize_t)size <= 0)
 	{
         pthread_mutex_unlock(&g_mutex);
