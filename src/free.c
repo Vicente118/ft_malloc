@@ -1,6 +1,8 @@
 #include "malloc.h"
 
-int    erase_block(void *ptr, t_zone *zone)
+pthread_mutex_t g_free_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int    erase_block(void *ptr, t_zone *zone)
 {
     t_block *tmp_block = zone->blocks;
 
@@ -25,7 +27,7 @@ int    erase_block(void *ptr, t_zone *zone)
     return 0;
 }
 
-int    munmap_if_free(void *ptr, t_zone  *zone)
+static int    munmap_if_free(t_zone  *zone)
 {
     t_block *tmp_block = zone->blocks;
 
@@ -38,7 +40,7 @@ int    munmap_if_free(void *ptr, t_zone  *zone)
         tmp_block = tmp_block->next;
     }
 
-    int ret = munmap(ptr, zone->total_size);
+    int ret = munmap(zone, zone->total_size);
 
     if (ret < 0)
     {
@@ -51,23 +53,23 @@ int    munmap_if_free(void *ptr, t_zone  *zone)
 
 void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->blocks + sizeof(t_block))
 {
-    pthread_mutex_lock(&g_mutex);
+    pthread_mutex_lock(&g_free_mutex);
 
     if (ptr == NULL)
     {
+        pthread_mutex_unlock(&g_free_mutex);
         return ;
     }
 
-    t_zone  *ordered_zones = reverse_list(g_zones);
+    t_zone  *ordered_zones = g_zones;
 
-
-
-    if (munmap_if_free(ptr, ordered_zones) < 0)
+    if (munmap_if_free(ordered_zones) < 0)
     {
+        pthread_mutex_unlock(&g_free_mutex);
         return ;
     }
 
-    pthread_mutex_unlock(&g_mutex);
+    pthread_mutex_unlock(&g_free_mutex);
 }
 
 

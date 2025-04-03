@@ -1,14 +1,14 @@
 #include "malloc.h"
 
-t_zone	       *g_zones = NULL;
+t_zone	       *g_zones         = NULL;
+pthread_mutex_t g_alloc_mutex   = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t g_display_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static size_t	align_size(size_t size)   // Useful for performance because CPU reads bytes 8 by 8.
+static size_t	align_size(size_t size) 
 {
 	return (size + ALIGNEMENT - 1) & ~(ALIGNEMENT - 1);
 }
-
 
 static t_block	*find_block(t_zone *zone, size_t size)
 {
@@ -29,7 +29,6 @@ static t_block	*find_block(t_zone *zone, size_t size)
                 best_fit = block;
             }
 		}
-
 		block = block->next;
 	}
 
@@ -58,7 +57,7 @@ static size_t	get_optimal_zone_size(int type, size_t size)
             zone_size = (zone_size + page_size - 1) & ~(page_size - 1);
             break;
     }
-
+    
     return zone_size;
 }
 
@@ -79,6 +78,12 @@ static t_zone	*create_new_zone(int type, size_t size)
     zone->total_size = zone_size;
     zone->type       = type;
     zone->next       = g_zones;
+    zone->prev       = NULL;
+
+    if (g_zones != NULL)
+    {
+        g_zones->prev = zone;
+    }
 
     g_zones = zone;
 
@@ -107,32 +112,27 @@ static void    print_zone_type(t_zone *zone)
         case 2:
             printf("%s%s", BGREEN, "LARGE : ");
     }
-
     printf("%p%s\n", zone, RESET);
-}
-
-t_zone  *reverse_list(t_zone *head) 
-{
-    t_zone  *prev = NULL, *current = head, *next = NULL;
-
-    while (current != NULL) 
-    {
-        next          = current->next; 
-        current->next = prev; 
-        prev          = current;       
-        current       = next;       
-    }
-
-    return prev;
 }
 
 void    show_alloc_mem()
 {
-    pthread_mutex_lock(&g_mutex);
+    pthread_mutex_lock(&g_display_mutex);
 
     size_t  allocated_bytes = 0;
+    t_zone  *tmp_zone       = g_zones;
 
-    t_zone  *tmp_zone = reverse_list(g_zones);
+    if (g_zones == NULL)
+    {
+        printf("%sNo allocation to display\n%s", BRED, RESET);
+        pthread_mutex_unlock(&g_display_mutex);
+        return;
+    }
+
+    while (tmp_zone->next)
+    {
+        tmp_zone = tmp_zone->next;
+    }
 
     while (tmp_zone)
     {
@@ -150,18 +150,16 @@ void    show_alloc_mem()
 
                 printf("%p - %p : %lu bytes\n", tmp_block, offset_address, tmp_block->size);
             }
-
             tmp_block = tmp_block->next;
         }
-
-        tmp_zone = tmp_zone->next;
+        tmp_zone = tmp_zone->prev;
 
         printf("\n");
     }
 
     printf("%sTotal : %lu bytes%s\n", BMAGENTA, allocated_bytes, RESET);
 
-    pthread_mutex_unlock(&g_mutex);
+    pthread_mutex_unlock(&g_display_mutex);
 }
 
 void    fragment_block(t_block *found_block, size_t size)
@@ -184,13 +182,13 @@ void    fragment_block(t_block *found_block, size_t size)
 
 void    *malloc(size_t size)
 {
-    pthread_mutex_lock(&g_mutex);
+    pthread_mutex_lock(&g_alloc_mutex);
 
     int type;
     
 	if ((ssize_t)size <= 0)
 	{
-        pthread_mutex_unlock(&g_mutex);
+        pthread_mutex_unlock(&g_alloc_mutex);
 		return NULL;
 	}
 
@@ -210,7 +208,7 @@ void    *malloc(size_t size)
 		if (zone->type == type)
 		{
 			t_block *block = find_block(zone, size);
-			
+
             if (block != NULL)
             {
                 found_block = block;
@@ -223,11 +221,11 @@ void    *malloc(size_t size)
 /// If no blocks are found or no zone has been created, create a new zone ///
 
     if (found_block == NULL)
-    {
+    { 
         zone = create_new_zone(type, size);
         if (zone == NULL)
         {
-            pthread_mutex_unlock(&g_mutex);
+            pthread_mutex_unlock(&g_alloc_mutex);
             return NULL;
         }
         found_block = zone->blocks;
@@ -240,7 +238,7 @@ void    *malloc(size_t size)
 
     found_block->allocated = true;
 
-    pthread_mutex_unlock(&g_mutex);
+    pthread_mutex_unlock(&g_alloc_mutex);
 
     return (void *)(found_block + 1);
 }

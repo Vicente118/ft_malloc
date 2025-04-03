@@ -14,7 +14,7 @@ EXEC = malloc
 
 CC = gcc
 
-CFLAGS = -Werror -Wall -Wextra -fPIC
+CFLAGS = -fPIC
 
 RM = rm -rf
 
@@ -37,7 +37,7 @@ $(LIBFT) :
 	make bonus -C libft
 
 exec :
-	$(CC) $(MAIN) -g -o $(EXEC) -L. -lft_malloc -L./libft -lft
+	$(CC) $(MAIN) -g -o $(EXEC) -L. -lft_malloc -L./libft -lft -lpthread
 
 clean :
 	$(RM) $(OBJS)

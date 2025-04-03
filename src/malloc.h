@@ -7,22 +7,22 @@
 # include <sys/resource.h>
 # include <pthread.h>
 
-# define ALIGNEMENT    16			 	  // malloc from glibc is aligned to 16 bytes (Most optimal on 64 bits systems)
-# define TINY_MAX      128
-# define SMALL_MAX     512
-# define MAP_ANONYMOUS 0x20
+# define ALIGNEMENT    		16			 	  // malloc from glibc is aligned to 16 bytes (Most optimal on 64 bits systems)
+# define TINY_MAX      		128
+# define SMALL_MAX     		512
+# define MAP_ANONYMOUS      0x20
 # define MIN_ALLOC_PER_ZONE 128
-# define PAGE_SIZE     sysconf(_SC_PAGESIZE) // In Linux for x86-64 processors (4096), can be obtained with sysconf(_SC_PAGESIZE) in C or getconf PAGE_SIZE in Bash
+# define PAGE_SIZE     		sysconf(_SC_PAGESIZE) // In Linux for x86-64 processors (4096), can be obtained with sysconf(_SC_PAGESIZE) in C or getconf PAGE_SIZE in Bash
 
-# define BBLACK        "\033[90m"
-# define BRED          "\033[91m"
-# define BGREEN        "\033[92m"
-# define BYELLOW       "\033[93m"
-# define BBLUE         "\033[94m"
-# define BMAGENTA      "\033[95m"
-# define BCYAN         "\033[96m"
-# define BWHITE        "\033[97m"
-# define RESET         "\033[0m"
+# define BBLACK        		"\033[90m"
+# define BRED          		"\033[91m"
+# define BGREEN        		"\033[92m"
+# define BYELLOW       		"\033[93m"
+# define BBLUE         		"\033[94m"
+# define BMAGENTA			"\033[95m"
+# define BCYAN         		"\033[96m"
+# define BWHITE        		"\033[97m"
+# define RESET         		"\033[0m"
 
 typedef enum bool
 {
@@ -49,17 +49,19 @@ struct s_block
 	t_block	        *prev;		// Pointer to the prev block
 };
 
-// 32 bytes
+// 40 bytes
 struct s_zone
 {
     int             type;       // Type of zone : TINY (0), SMALL (1), LARGE (, SMALL (1), LARGE (2)2)
   	size_t		    total_size;	// Total size of the zone
   	t_block		    *blocks;	// List of block in this zone
 	t_zone	        *next;		// Pointer to the next zone
+	t_zone	        *prev;		// Pointer to the prev zone
 };
 
 extern t_zone	*g_zones;
-extern pthread_mutex_t g_mutex; 
+extern pthread_mutex_t g_alloc_mutex; 
+extern pthread_mutex_t g_free_mutex;
 
 void	*mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 int	    munmap(void *addr, size_t length);

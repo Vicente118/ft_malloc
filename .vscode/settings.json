@@ -3,6 +3,7 @@
         "*.asm": "nasm",
         "libft.h": "c",
         "stdalign.h": "c",
-        "malloc.h": "c"
+        "malloc.h": "c",
+        "string.h": "c"
     }
 }
