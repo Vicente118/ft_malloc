@@ -69,7 +69,7 @@ static t_zone	*create_new_zone(int type, size_t size)
 
     if (ptr == (void *)-1)
     {
-        printf("Error from mmap syscall\n");
+        ft_putstr_fd("Error from mmap syscall\n", 2);
         return NULL;
     }
 
@@ -103,16 +103,21 @@ static void    print_zone_type(t_zone *zone)
 {
     switch(zone->type)
     {
-        case 0: 
-            printf("%s%s", BGREEN, "TINY : ");
+        case 0:
+            ft_putstr_fd(BGREEN, 1);
+            ft_putstr_fd("TINY : ", 1);
             break;
         case 1:
-            printf("%s%s", BGREEN, "SMALL : ");
+            ft_putstr_fd(BGREEN, 1);
+            ft_putstr_fd("SMALL : ", 1);
             break;
         case 2:
-            printf("%s%s", BGREEN, "LARGE : ");
+            ft_putstr_fd(BGREEN, 1);
+            ft_putstr_fd("LARGE : ", 1);
     }
-    printf("%p%s\n", zone, RESET);
+    print_address(zone);
+    ft_putstr_fd("\n", 1);
+    ft_putstr_fd(RESET, 1);
 }
 
 void    show_alloc_mem()
@@ -124,7 +129,9 @@ void    show_alloc_mem()
 
     if (g_zones == NULL)
     {
-        printf("%sNo allocation to display\n%s", BRED, RESET);
+        ft_putstr_fd(BRED, 1);
+        ft_putstr_fd("No allocation to display\n", 1);
+        ft_putstr_fd(RESET, 1);
         pthread_mutex_unlock(&g_display_mutex);
         return;
     }
@@ -147,17 +154,17 @@ void    show_alloc_mem()
             if (tmp_block->allocated == true)
             {
                 allocated_bytes += tmp_block->size;
-
-                printf("%p - %p : %lu bytes\n", tmp_block, offset_address, tmp_block->size);
+                
+                print_block(tmp_block, offset_address, tmp_block->size);
             }
             tmp_block = tmp_block->next;
         }
         tmp_zone = tmp_zone->prev;
 
-        printf("\n");
+        ft_putstr_fd("\n", 1);
     }
 
-    printf("%sTotal : %lu bytes%s\n", BMAGENTA, allocated_bytes, RESET);
+    print_total(allocated_bytes);
 
     pthread_mutex_unlock(&g_display_mutex);
 }

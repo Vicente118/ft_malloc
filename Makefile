@@ -18,7 +18,7 @@ CFLAGS = -fPIC
 
 RM = rm -rf
 
-SRCS = src/malloc.c src/free.c
+SRCS = src/malloc.c src/free.c src/utils.c
 
 OBJS = $(SRCS:.c=.o)
 

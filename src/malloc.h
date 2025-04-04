@@ -6,6 +6,7 @@
 # include <sys/mman.h>
 # include <sys/resource.h>
 # include <pthread.h>
+# include "../libft/libft.h"
 
 # define ALIGNEMENT    		16			 	  // malloc from glibc is aligned to 16 bytes (Most optimal on 64 bits systems)
 # define TINY_MAX      		128
@@ -73,8 +74,9 @@ void    *realloc(void *ptr, size_t size);
 void    free(void *ptr);
 
 void    show_alloc_mem();
-t_zone  *reverse_list(t_zone *head) ;
-
+void    print_block(t_block *block, void *offset_address, size_t block_size);
+void    print_total(size_t allocated_bytes);
+void 	print_address(void *ptr);
 
 #endif
 

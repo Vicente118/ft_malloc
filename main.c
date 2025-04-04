@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     int     dot  = '.';
     char    *str;
 
-    if (!(str = alloc_and_set_value(16, A)))
+    if (!(str = alloc_and_set_value(15, A)))
     {
         return 1;
     }
