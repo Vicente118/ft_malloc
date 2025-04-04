@@ -14,9 +14,9 @@ void    print_address(void *ptr)
     {
         buffer[--i] = '0';
     }
+
     else
     {
-        // Convert address to hexadecimal representation
         while (addr > 0 && i > 2)
         {
             buffer[--i] = base[addr & 15]; // Get last hex digit

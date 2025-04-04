@@ -1,5 +1,5 @@
-#ifndef FT_MALLOC
-# define FT_MALLOC
+#ifndef __MALLOC__
+# define __MALLOC__
 
 # include <unistd.h>
 # include <stdio.h>
@@ -8,7 +8,7 @@
 # include <pthread.h>
 # include "../libft/libft.h"
 
-# define ALIGNEMENT    		16			 	  // malloc from glibc is aligned to 16 bytes (Most optimal on 64 bits systems)
+# define ALIGNEMENT    		16			 	      // malloc from glibc is aligned to 16 bytes (Most optimal on 64 bits systems)
 # define TINY_MAX      		128
 # define SMALL_MAX     		512
 # define MAP_ANONYMOUS      0x20
@@ -60,9 +60,9 @@ struct s_zone
 	t_zone	        *prev;		// Pointer to the prev zone
 };
 
-extern t_zone	*g_zones;
-extern pthread_mutex_t g_alloc_mutex; 
-extern pthread_mutex_t g_free_mutex;
+extern t_zone			*g_zones;
+extern pthread_mutex_t	g_alloc_mutex; 
+extern pthread_mutex_t	g_free_mutex;
 
 void	*mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 int	    munmap(void *addr, size_t length);
