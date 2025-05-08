@@ -5,15 +5,29 @@ pthread_mutex_t g_alloc_mutex   = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t g_display_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
+
 static size_t	align_size(size_t size) 
 {
+/*
+    Align memory is a standard in memory allocator.
+    CPU are more efficient for reading aligned memory because it reads 4/8/16 bytes by 4/8/16 bytes according to the cpu (For a lot of others reasons).
+    For size = 10, (10 + 16 - 1) & ~(16 - 1) = 25 & ~15 = 25 & 0xFFFFFFF0 = 16
+*/
+
 	return (size + ALIGNEMENT - 1) & ~(ALIGNEMENT - 1);
 }
+
+
 
 static t_block	*find_block(t_zone *zone, size_t size)
 {
 	t_block		*block = zone->blocks;
     t_block     *best_fit = NULL;
+
+/*
+    Loop through each block of given zone. The function tries to find a unallocated block with enough memory to allocate size bytes for the user.
+    It also tries to optimize loses by finding the block that fits the best with the user's demand. 
+*/
 
 	while (block != NULL)
 	{
@@ -35,10 +49,22 @@ static t_block	*find_block(t_zone *zone, size_t size)
 	return best_fit;
 }
 
+
+
 static size_t	get_optimal_zone_size(int type, size_t size)
 {
     size_t page_size = PAGE_SIZE;
     size_t zone_size;
+
+/*
+    Find right zone size according to the type of allocation.
+
+    TINY/SMALL: zone_size is equal to -> sizeof(t_zone) + (sizeof(t_block) + TINY_MAX) * 128    (Each zone can now allocate 128 blocks minimum)
+                zone_size is finally aligned to a memory page for performance and compliance to standards for the CPU.
+
+    LARGE:      zone_size is equal to -> sizeof(t_zone) + sizeof(t_block) + size to allocate.page_size
+                zone_size is finally aligned to a memory page.
+*/
 
     switch (type)
     {
@@ -61,8 +87,17 @@ static size_t	get_optimal_zone_size(int type, size_t size)
     return zone_size;
 }
 
+
+
 static t_zone	*create_new_zone(int type, size_t size)
 {
+
+/*
+    Find the best size to allocate with mmap.
+    Allocate memory and returns a pointer to the beginning of the memory zone allocated.
+    Initialize a new t_zone.
+*/
+
     size_t zone_size = get_optimal_zone_size(type, size);
 
     void *ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
@@ -87,6 +122,10 @@ static t_zone	*create_new_zone(int type, size_t size)
 
     g_zones = zone;
 
+/*
+    Creation of a new block at the beginning of the zone -> (char *)ptr + sizeof(t_zone).
+    Initialize block data and returns new zone.
+*/
 
     t_block *block = (t_block *)((char *)ptr + sizeof(t_zone));   // We are casting ptr into (char *) so we can increment byte by byte
 
@@ -98,6 +137,8 @@ static t_zone	*create_new_zone(int type, size_t size)
     zone->blocks = block;
     return zone;
 }
+
+
 
 static void    print_zone_type(t_zone *zone)
 {
@@ -119,6 +160,8 @@ static void    print_zone_type(t_zone *zone)
     ft_putstr_fd("\n", 1);
     ft_putstr_fd(RESET, 1);
 }
+
+
 
 void    show_alloc_mem()
 {
@@ -169,8 +212,16 @@ void    show_alloc_mem()
     pthread_mutex_unlock(&g_display_mutex);
 }
 
+
+
 void    fragment_block(t_block *found_block, size_t size)
 {
+
+/*
+    If a block found allocated is larger than asked, this function fragment the block in 2 to get a second block that
+    could be used later wihtout impacting the initial allocation asked by the user.
+*/
+
     t_block *new_block   = (t_block *)((char *)found_block + sizeof(t_block) + size);
     
     new_block->size      = found_block->size - size - sizeof(t_block);
@@ -186,6 +237,8 @@ void    fragment_block(t_block *found_block, size_t size)
     found_block->next    = new_block;
     found_block->size    = size;
 }
+
+
 
 void    *malloc(size_t size)
 {
@@ -205,10 +258,16 @@ void    *malloc(size_t size)
 	else if (size <= SMALL_MAX) type = SMALL;
 	else 			            type = LARGE;
 
-	t_zone	*zone        = g_zones;
+	t_zone	*zone        = g_zones; 
     t_block *found_block = NULL;
 
-/// Look in the existing blocks if there is a free block ///
+/*
+    #### Look in the existing blocks if there is a free block. ####
+    Loop into existings zones in order to find a zone zith the researched zone type.
+    If a zone is found it will call find_block() in order to find a appropriate block to allocate memory.
+    If no block was found, found_block remains NULL and it will needs to create a new zone.
+    If a block is found, a pointer to this block is assigned to found_block.
+*/
 
 	while (zone != NULL)
 	{
@@ -225,7 +284,11 @@ void    *malloc(size_t size)
 		zone = zone->next;
 	}
 
-/// If no blocks are found or no zone has been created, create a new zone ///
+/*
+    #### If no blocks are found or no zone has been created, create a new zone ####
+    Call of create_new_zone() of the type = type and size = size.
+    We assing the first zone block to the foud_block variable.
+*/
 
     if (found_block == NULL)
     { 
@@ -237,6 +300,11 @@ void    *malloc(size_t size)
         }
         found_block = zone->blocks;
     }
+
+/*
+    If found_block size allocated is greater than requested size + sizeof(struct t_block),
+    we call fragment_block() to optimize memory and don't let empty and unused memory.
+*/
 
     if (found_block->size > size + sizeof(t_block))
     {
@@ -251,30 +319,49 @@ void    *malloc(size_t size)
 }
 
 
-// Exemple d'une zone TINY après deux allocations de 64 et 32 octets :
 
-// +---------------------+
-// | t_zone              |
-// | total_size = 4096   |
-// | blocks → bloc1      |
-// +---------------------+
-// | t_block (bloc1)     |
-// | size = 64, free = 0 |
-// +---------------------+
-// | Données utilisateur |
-// | (64 octets)         |
-// +---------------------+
-// | t_block (bloc2)     |
-// | size = 32, free = 0 |
-// +---------------------+
-// | Données utilisateur |
-// | (32 octets)         |
-// +---------------------+
-// | ... (espace libre)  |
-// +---------------------+
-//
+
+
+// +------------------+
+// | t_zone           |  En-tête de la zone
+// +------------------+
+// | t_block (bloc1)  |  En-tête du premier bloc
+// +------------------+
+// | Données bloc1    |  Espace utilisateur du bloc 1
+// +------------------+
+// | t_block (bloc2)  |  En-tête du deuxième bloc
+// +------------------+
+// | Données bloc2    |  Espace utilisateur du bloc 2
+// +------------------+
+// | ...              |
+// +------------------+
+
+// +------------------+  Adresses basses
+// | Segment de texte |  (Code exécutable)
+// +------------------+
+// | Segment des      |  (Variables globales/statiques initialisées)
+// | données          |
+// +------------------+
+// | Segment BSS      |  (Variables globales/statiques non initialisées)
+// +------------------+
+// | Tas (Heap)       |  ← Zone gérée par malloc/free
+// |     ↓            |  (Croît vers les adresses hautes)
+// |                  |
+// +------------------+
+// |                  |
+// | Espace libre     |
+// |                  |
+// +------------------+
+// |     ↑            |
+// | Pile (Stack)     |  (Variables locales, paramètres de fonction)
+// +------------------+  (Croît vers les adresses basses)
+// | Arguments et     |
+// | variables        |
+// | d'environnement  |
+// +------------------+  Adresses hautes
 
 /*
+
 Simplistically malloc and free work like this:
 
 malloc provides access to a process's heap. The heap is a construct in the C core library (commonly libc) that allows objects to obtain exclusive access to some space on the process's heap.

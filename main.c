@@ -1,5 +1,6 @@
 #include "src/malloc.h"
 #include "libft/libft.h"
+#include <stdlib.h>
 
 void    *alloc_and_set_value(size_t size, int value)
 {
@@ -23,19 +24,19 @@ int main(int argc, char **argv)
     int     dot  = '.';
     char    *str;
 
-    if (!(str = alloc_and_set_value(15, A)))
+    if (!(str = alloc_and_set_value(13254, A)))
     {
         return 1;
     }
+    // if (!(str = alloc_and_set_value(111, A)))
+    // {
+    //     return 1;
+    // }
     // if (!(str = alloc_and_set_value(13452, A)))
     // {
     //     return 1;
     // }
-    // if (!(str = alloc_and_set_value(134532, A)))
-    // {
-    //     return 1;
-    // }
-    // if (!(str = alloc_and_set_value(132, A)))
+    // if (!(str = alloc_and_set_value(242, A)))
     // {
     //     return 1;
     // }
