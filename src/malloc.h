@@ -78,13 +78,14 @@ void    *malloc(size_t size);
 void    *realloc(void *ptr, size_t size);
 void    free(void *ptr);
 
-// Display
+/// Display
 void    show_alloc_mem();
 void    show_alloc_mem_ex();
 void    print_memory_hex(void *addr, size_t size);
 void    print_block(t_block *block, void *offset_address, size_t block_size);
 void    print_total(size_t allocated_bytes);
 void 	print_address(void *ptr);
+
 
 #endif
 
