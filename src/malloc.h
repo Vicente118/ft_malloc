@@ -60,20 +60,28 @@ struct s_zone
 	t_zone	        *prev;		// Pointer to the prev zone
 };
 
+/// Global variable accessible everywhere
 extern t_zone			*g_zones;
 extern pthread_mutex_t	g_alloc_mutex; 
 extern pthread_mutex_t	g_free_mutex;
+extern pthread_mutex_t	g_realloc_mutex;
+extern pthread_mutex_t g_display_mutex;
 
+/// Authorized functions
 void	*mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 int	    munmap(void *addr, size_t length);
 int	    getrlimit(int resource, struct rlimit *rlim);
 long	sysconf(int name);
 
+/// Alloc and free
 void    *malloc(size_t size);
 void    *realloc(void *ptr, size_t size);
 void    free(void *ptr);
 
+// Display
 void    show_alloc_mem();
+void    show_alloc_mem_ex();
+void    print_memory_hex(void *addr, size_t size);
 void    print_block(t_block *block, void *offset_address, size_t block_size);
 void    print_total(size_t allocated_bytes);
 void 	print_address(void *ptr);

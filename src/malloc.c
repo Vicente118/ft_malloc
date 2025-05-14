@@ -212,7 +212,38 @@ void    show_alloc_mem()
     pthread_mutex_unlock(&g_display_mutex);
 }
 
+void    show_alloc_mem_ex()
+{
+    pthread_mutex_lock(&g_display_mutex);
 
+    t_zone  *zone = g_zones;
+
+    if (zone == NULL)
+    {
+        pthread_mutex_unlock(&g_display_mutex);
+        return;
+    }
+
+    while (zone != NULL)
+    {
+        t_block *block = zone->blocks;
+
+        while (block != NULL)
+        {
+            void *data_address = (void *)((char *)block + sizeof(t_block));
+
+            if (block->allocated == true)
+            {
+                print_memory_hex(data_address, block->size);
+            }
+
+            block = block->next;
+        }
+
+        zone = zone->next;
+    }
+    pthread_mutex_unlock(&g_display_mutex);
+}
 
 void    fragment_block(t_block *found_block, size_t size)
 {

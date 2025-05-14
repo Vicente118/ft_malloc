@@ -14,18 +14,21 @@ EXEC = malloc
 
 CC = gcc
 
-CFLAGS = -fPIC
+CFLAGS = -fPIC -shared -g #-Wall -Wextra -Werror
 
 RM = rm -rf
 
-SRCS = src/malloc.c src/free.c src/utils.c
+SRCS =	src/malloc.c  \
+		src/free.c    \
+		src/realloc.c \
+		src/utils.c   
 
 OBJS = $(SRCS:.c=.o)
 
 all : $(NAME)
 
 $(NAME) : $(OBJS) $(LIBFT)
-	$(CC) -shared -g -o $(NAME) $(OBJS) -L./libft -lft
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJS) -L./libft -lft
 	$(RM) $(LINK)
 	ln -s $(NAME) $(LINK)
 	export LD_LIBRARY_PATH=.

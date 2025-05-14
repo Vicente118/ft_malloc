@@ -4,6 +4,10 @@ pthread_mutex_t g_free_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static int    munmap_if_free(t_zone  *zone, t_zone* prev_zone, bool can_free_zone)
 {
+/*
+    If all block of a zone are free and is NOT the last zone, then munmap this zone and adjust pointers.
+*/
+
     if (can_free_zone && (g_zones != zone || zone->next != NULL || prev_zone != NULL))
     {
         if (prev_zone != NULL)
@@ -28,6 +32,9 @@ static int    munmap_if_free(t_zone  *zone, t_zone* prev_zone, bool can_free_zon
 
 static t_block  *find_block_by_ptr(t_zone *zone, void *ptr)
 {
+/*
+    Find block corresponding to the pointer to free.
+*/
     t_block *block = zone->blocks;
 
     while (block != NULL)
@@ -68,6 +75,11 @@ static int  error_management(t_zone *zone, t_block *block)
 
 static void defragment_memory(t_block *block)
 {
+/*
+    Check if next block exist AND is free. Add next size block to initial block to merge them into one block.
+    Then adjust spointer.
+*/
+
     if (block->next != NULL && block->next->allocated == false)
     {
         t_block *next_block = block->next;
@@ -78,6 +90,10 @@ static void defragment_memory(t_block *block)
         if (next_block->next != NULL)
             next_block->next->prev = block;
     }
+
+/*
+    Same here but with prev block.    
+*/
 
     if (block->prev != NULL && block->prev->allocated == false)
     {
@@ -96,6 +112,9 @@ static void defragment_memory(t_block *block)
 
 static bool is_zone_free(t_zone *zone)
 {
+/*
+    Check if every block of a zone are free to munmap zone just after.
+*/
     t_block *block = zone->blocks;
 
     while (block != NULL)
@@ -122,10 +141,13 @@ void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->
     }
     
     t_zone  *zone       = g_zones;
-    t_zone  *prev_zone  = NULL;
+    t_zone  *prev_zone  = NULL;         //Keep a trace of prev zone in case of full zone liberation.
     t_block *block      = NULL;
     
-/// Loop to find block to free.
+/* 
+    Loop to find block to free. Check if pointer to free is in the zone.
+    If yes, enter into find_block_by_ptr() to find the right block to free.
+*/
 
     while (zone != NULL)
     {
@@ -143,7 +165,6 @@ void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->
         zone = zone->next;
     }
 
-/// Error managment
 
     if (error_management(zone, block) == -1)
     {
@@ -152,8 +173,7 @@ void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->
     }
 
     block->allocated = false;  // Put block to free
-
-/// Memory defragmentation
+    memset((void*)((char*)block + sizeof(t_block)), 0, block->size); // Erase data in memory for security reason
 
     defragment_memory(block);
 

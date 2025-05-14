@@ -2,9 +2,11 @@
 #include "libft/libft.h"
 #include <stdlib.h>
 
-void    *alloc_and_set_value(size_t size, int value)
+void    *alloc_and_check(char *src)
 {
-    char    *str = malloc(size + 1);
+    size_t len = ft_strlen(src);
+
+    char    *str = malloc(len + 1);
     
     if (!str)
     {
@@ -12,22 +14,30 @@ void    *alloc_and_set_value(size_t size, int value)
         return(NULL);
     }
 
-    ft_memset(str, value, size - 1);
-    str[size] = '\0';
+    ft_strlcpy(str, src, len + 1);
 
     return str;
 }
 
 int main(int argc, char **argv)
 {
-    int     A    = 'A';
-    int     dot  = '.';
     char    *str;
+    char    *str2;
+    char    *str3;
 
-    if (!(str = alloc_and_set_value(13254, A)))
+    if (!(str = alloc_and_check("Hello World !")))
     {
         return 1;
     }
+    if (!(str2 = alloc_and_check("Printable Characters")))
+    {
+        return 1;
+    }
+    if (!(str3 = alloc_and_check("XOXOOXOXOXXOXOXOXOXOXOXOXOXOXO")))
+    {
+        return 1;
+    }
+
     // if (!(str = alloc_and_set_value(111, A)))
     // {
     //     return 1;
@@ -42,8 +52,12 @@ int main(int argc, char **argv)
     // }
 
     show_alloc_mem();
+    ft_putstr_fd("\n\n", 1);
+    show_alloc_mem_ex();
 
     free(str);
-    
+    free(str2);
+    free(str3);
+
     return 0;
 }
