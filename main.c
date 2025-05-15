@@ -22,7 +22,7 @@ void test_malloc(void)
     void *p1 = malloc(0);
     printf(p1 == NULL ? SUCCESS : ERROR);
     printf("malloc(0) -> %p\n", p1);
-    
+    free(p1);
     void *p2 = malloc(1024 * 1024);
     printf(p2 ? SUCCESS : ERROR);
     printf("malloc(1MB) -> %p\n", p2);
@@ -35,7 +35,7 @@ void test_malloc(void)
         printf(ptrs[i] ? SUCCESS : ERROR);
     }
     printf("Allocations multiples\n");
-    
+    show_alloc_mem_ex();
     // Libérations dans un ordre aléatoire
     free(ptrs[2]);
     free(ptrs[0]);
