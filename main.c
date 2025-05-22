@@ -35,7 +35,6 @@ void test_malloc(void)
         printf(ptrs[i] ? SUCCESS : ERROR);
     }
     printf("Allocations multiples\n");
-    show_alloc_mem_ex();
     // Libérations dans un ordre aléatoire
     free(ptrs[2]);
     free(ptrs[0]);

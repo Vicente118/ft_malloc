@@ -62,7 +62,7 @@ static size_t	get_optimal_zone_size(int type, size_t size)
     TINY/SMALL: zone_size is equal to -> sizeof(t_zone) + (sizeof(t_block) + TINY_MAX) * 128    (Each zone can now allocate 128 blocks minimum)
                 zone_size is finally aligned to a memory page for performance and compliance to standards for the CPU.
 
-    LARGE:      zone_size is equal to -> sizeof(t_zone) + sizeof(t_block) + size to allocate.page_size
+    LARGE:      zone_size is equal to -> sizeof(t_zone) + sizeof(t_block) + size to allocate
                 zone_size is finally aligned to a memory page.
 */
 

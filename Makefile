@@ -11,6 +11,7 @@ LINK = libft_malloc.so
 MAIN = main.c
 
 EXEC = malloc
+EXEC_SYS = malloc_sys
 
 CC = gcc
 
@@ -41,6 +42,9 @@ $(LIBFT) :
 
 exec :
 	$(CC) $(MAIN) -g -o $(EXEC) -L. -lft_malloc -L./libft -lft -lpthread
+
+exec_sys :
+	$(CC) -g $(MAIN) -o $(EXEC_SYS) -L./libft -lft -lpthread
 
 clean :
 	$(RM) $(OBJS)
