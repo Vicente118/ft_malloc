@@ -50,7 +50,6 @@ static t_block	*find_block(t_zone *zone, size_t size)
 }
 
 
-
 static size_t	get_optimal_zone_size(int type, size_t size)
 {
     size_t page_size = PAGE_SIZE;
@@ -106,6 +105,13 @@ static t_zone	*create_new_zone(int type, size_t size)
     {
         ft_putstr_fd("Error from mmap syscall\n", 2);
         return NULL;
+    }
+
+    // Precharging pages to avoid futur page faults
+    for (size_t i = 0; i < zone_size; i += PAGE_SIZE) {
+        memset(ptr + i, 0, 1);
+        if (i + (PAGE_SIZE/2) < zone_size)
+            memset(ptr + i + (PAGE_SIZE/2), 0, 1);
     }
 
     t_zone  *zone = (t_zone *)ptr;
@@ -315,6 +321,7 @@ void    *malloc(size_t size)
 		zone = zone->next;
 	}
 
+    
 /*
     #### If no blocks are found or no zone has been created, create a new zone ####
     Call of create_new_zone() of the type = type and size = size.

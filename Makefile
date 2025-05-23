@@ -51,6 +51,6 @@ clean :
 
 fclean : clean
 	# make fclean -C libft
-	$(RM) $(NAME) $(LINK) $(EXEC)
+	$(RM) $(NAME) $(LINK) $(EXEC) $(EXEC_SYS)
 
 re : fclean all exec

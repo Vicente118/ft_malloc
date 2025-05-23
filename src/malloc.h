@@ -6,13 +6,14 @@
 # include <sys/mman.h>
 # include <sys/resource.h>
 # include <pthread.h>
+# include <stdint.h> 
 # include "../libft/libft.h"
 
 # define ALIGNEMENT    		16			 	      // malloc from glibc is aligned to 16 bytes (Most optimal on 64 bits systems)
 # define TINY_MAX      		128
 # define SMALL_MAX     		512
 # define MAP_ANONYMOUS      0x20
-# define MIN_ALLOC_PER_ZONE 128
+# define MIN_ALLOC_PER_ZONE 100
 # define PAGE_SIZE     		sysconf(_SC_PAGESIZE) // In Linux for x86-64 processors (4096), can be obtained with sysconf(_SC_PAGESIZE) in C or getconf PAGE_SIZE in Bash
 
 # define BBLACK        		"\033[90m"
