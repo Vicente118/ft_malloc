@@ -99,19 +99,12 @@ static t_zone	*create_new_zone(int type, size_t size)
 
     size_t zone_size = get_optimal_zone_size(type, size);
 
-    void *ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    void *ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_HUGE , -1, 0);
 
     if (ptr == (void *)-1)
     {
         ft_putstr_fd("Error from mmap syscall\n", 2);
         return NULL;
-    }
-
-    // Precharging pages to avoid futur page faults
-    for (size_t i = 0; i < zone_size; i += PAGE_SIZE) {
-        memset(ptr + i, 0, 1);
-        if (i + (PAGE_SIZE/2) < zone_size)
-            memset(ptr + i + (PAGE_SIZE/2), 0, 1);
     }
 
     t_zone  *zone = (t_zone *)ptr;
@@ -344,7 +337,7 @@ void    *malloc(size_t size)
     we call fragment_block() to optimize memory and don't let empty and unused memory.
 */
 
-    if (found_block->size > size + sizeof(t_block))
+    if (found_block->size > size + sizeof(t_block) + 512)
     {
         fragment_block(found_block, size);
     }
