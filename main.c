@@ -3,9 +3,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define SUCCESS "\033[1;32m✓\033[0m "
-#define ERROR "\033[1;31m✗\033[0m "
-
 int main()
 {
     int i;
@@ -15,6 +12,7 @@ int main()
     {
         addr = (char*)malloc(1024);
         addr[0] = 42;
+        free(addr);
         i++;
     }
     return (0);
