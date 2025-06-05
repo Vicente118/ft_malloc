@@ -4,7 +4,6 @@ t_zone	       *g_zones = NULL;
 pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-
 static size_t	align_size(size_t size) 
 {
 /*
