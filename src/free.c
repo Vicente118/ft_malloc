@@ -1,7 +1,5 @@
 #include "malloc.h"
 
-pthread_mutex_t g_free_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 static int    munmap_if_free(t_zone  *zone, t_zone* prev_zone, bool can_free_zone)
 {
 /*
@@ -132,11 +130,11 @@ static bool is_zone_free(t_zone *zone)
 
 void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->blocks + sizeof(t_block))
 {
-    pthread_mutex_lock(&g_free_mutex);
+    pthread_mutex_lock(&g_mutex);
 
     if (ptr == NULL)
     {
-        pthread_mutex_unlock(&g_free_mutex);
+        pthread_mutex_unlock(&g_mutex);
         return ;
     }
     
@@ -168,7 +166,7 @@ void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->
 
     if (error_management(zone, block) == -1)
     {
-        pthread_mutex_unlock(&g_free_mutex);
+        pthread_mutex_unlock(&g_mutex);
         return;
     }
 
@@ -181,9 +179,9 @@ void    free(void *ptr)     // ptr is referencing to (void *)((char *)tmp_zone->
 
     if (munmap_if_free(zone, prev_zone, can_free_zone) < 0)
     {
-        pthread_mutex_unlock(&g_free_mutex);
+        pthread_mutex_unlock(&g_mutex);
         return ;
     }
 
-    pthread_mutex_unlock(&g_free_mutex);
+    pthread_mutex_unlock(&g_mutex);
 }

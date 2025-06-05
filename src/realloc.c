@@ -1,7 +1,5 @@
 #include "malloc.h"
 
-pthread_mutex_t g_realloc_mutex   = PTHREAD_MUTEX_INITIALIZER;
-
 static t_block  *find_block_by_ptr(t_zone *zone, void *ptr)
 {
 /*
@@ -26,20 +24,20 @@ static t_block  *find_block_by_ptr(t_zone *zone, void *ptr)
 
 void    *realloc(void *ptr, size_t size)
 {
-    pthread_mutex_lock(&g_realloc_mutex);
+    pthread_mutex_lock(&g_mutex);
 
     t_zone  *zone   = g_zones;
     t_block *block  = NULL;
 
     if (ptr == NULL)
     {
-        pthread_mutex_unlock(&g_realloc_mutex);
+        pthread_mutex_unlock(&g_mutex);
         return malloc(size);
     }
 
     if (size == 0)
     {
-        pthread_mutex_unlock(&g_realloc_mutex);
+        pthread_mutex_unlock(&g_mutex);
         free(ptr);
         return NULL;
     }
@@ -54,19 +52,19 @@ void    *realloc(void *ptr, size_t size)
 
     if (block == NULL)
     {
-        pthread_mutex_unlock(&g_realloc_mutex);
+        pthread_mutex_unlock(&g_mutex);
         return NULL;
     }
 
     if (block->size == size)
     {
-        pthread_mutex_unlock(&g_realloc_mutex);
+        pthread_mutex_unlock(&g_mutex);
         return ptr;
     }
 
     size_t block_size = block->size;
 
-    pthread_mutex_unlock(&g_realloc_mutex);
+    pthread_mutex_unlock(&g_mutex);
 
     void    *new_ptr = malloc(size);
 

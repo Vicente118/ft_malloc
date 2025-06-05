@@ -1,8 +1,7 @@
 #include "malloc.h"
 
-t_zone	       *g_zones         = NULL;
-pthread_mutex_t g_alloc_mutex   = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t g_display_mutex = PTHREAD_MUTEX_INITIALIZER;
+t_zone	       *g_zones = NULL;
+pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 
@@ -99,7 +98,7 @@ static t_zone	*create_new_zone(int type, size_t size)
 
     size_t zone_size = get_optimal_zone_size(type, size);
 
-    void *ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE | MAP_HUGE , -1, 0);
+    void *ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
     if (ptr == (void *)-1)
     {
@@ -164,7 +163,7 @@ static void    print_zone_type(t_zone *zone)
 
 void    show_alloc_mem()
 {
-    pthread_mutex_lock(&g_display_mutex);
+    pthread_mutex_lock(&g_mutex);
 
     size_t  allocated_bytes = 0;
     t_zone  *tmp_zone       = g_zones;
@@ -174,7 +173,7 @@ void    show_alloc_mem()
         ft_putstr_fd(BRED, 1);
         ft_putstr_fd("No allocation to display\n", 1);
         ft_putstr_fd(RESET, 1);
-        pthread_mutex_unlock(&g_display_mutex);
+        pthread_mutex_unlock(&g_mutex);
         return;
     }
 
@@ -208,18 +207,18 @@ void    show_alloc_mem()
 
     print_total(allocated_bytes);
 
-    pthread_mutex_unlock(&g_display_mutex);
+    pthread_mutex_unlock(&g_mutex);
 }
 
 void    show_alloc_mem_ex()
 {
-    pthread_mutex_lock(&g_display_mutex);
+    pthread_mutex_lock(&g_mutex);
 
     t_zone  *zone = g_zones;
 
     if (zone == NULL)
     {
-        pthread_mutex_unlock(&g_display_mutex);
+        pthread_mutex_unlock(&g_mutex);
         return;
     }
 
@@ -241,7 +240,7 @@ void    show_alloc_mem_ex()
 
         zone = zone->next;
     }
-    pthread_mutex_unlock(&g_display_mutex);
+    pthread_mutex_unlock(&g_mutex);
 }
 
 void    fragment_block(t_block *found_block, size_t size)
@@ -272,13 +271,13 @@ void    fragment_block(t_block *found_block, size_t size)
 
 void    *malloc(size_t size)
 {
-    pthread_mutex_lock(&g_alloc_mutex);
+    pthread_mutex_lock(&g_mutex);
 
     int type;
     
 	if ((ssize_t)size <= 0)
 	{
-        pthread_mutex_unlock(&g_alloc_mutex);
+        pthread_mutex_unlock(&g_mutex);
 		return NULL;
 	}
 
@@ -326,7 +325,7 @@ void    *malloc(size_t size)
         zone = create_new_zone(type, size);
         if (zone == NULL)
         {
-            pthread_mutex_unlock(&g_alloc_mutex);
+            pthread_mutex_unlock(&g_mutex);
             return NULL;
         }
         found_block = zone->blocks;
@@ -337,14 +336,14 @@ void    *malloc(size_t size)
     we call fragment_block() to optimize memory and don't let empty and unused memory.
 */
 
-    if (found_block->size > size + sizeof(t_block) + 512)
+    if (found_block->size > size + sizeof(t_block))
     {
         fragment_block(found_block, size);
     }
 
     found_block->allocated = true;
 
-    pthread_mutex_unlock(&g_alloc_mutex);
+    pthread_mutex_unlock(&g_mutex);
 
     return (void *)(found_block + 1);
 }
