@@ -13,8 +13,6 @@
 # define TINY_MAX      		1024
 # define SMALL_MAX     		1024 * 16
 # define MAP_ANONYMOUS      0x20
-# define MAP_HUGE			0x40
-# define MAP_POPU        	0x08000 
 # define MIN_ALLOC_PER_ZONE 128
 # define PAGE_SIZE     		sysconf(_SC_PAGESIZE) // In Linux for x86-64 processors (4096), can be obtained with sysconf(_SC_PAGESIZE) in C or getconf PAGE_SIZE in Bash
 
@@ -56,7 +54,7 @@ struct s_block
 // 40 bytes
 struct s_zone
 {
-    int             type;       // Type of zone : TINY (0), SMALL (1), LARGE (, SMALL (1), LARGE (2)2)
+    int             type;       // Type of zone : TINY (0), SMALL (1), LARGE (2)
   	size_t		    total_size;	// Total size of the zone
   	t_block		    *blocks;	// List of block in this zone
 	t_zone	        *next;		// Pointer to the next zone

@@ -50,8 +50,8 @@ static t_block	*find_block(t_zone *zone, size_t size)
 
 static size_t	get_optimal_zone_size(int type, size_t size)
 {
-    size_t page_size = PAGE_SIZE;
-    size_t zone_size;
+    size_t  page_size = PAGE_SIZE;
+    size_t  zone_size;
 
 /*
     Find right zone size according to the type of allocation.
@@ -95,7 +95,7 @@ static t_zone	*create_new_zone(int type, size_t size)
     Initialize a new t_zone.
 */
 
-    size_t zone_size = get_optimal_zone_size(type, size);
+    size_t  zone_size = get_optimal_zone_size(type, size);
 
     void *ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
@@ -124,7 +124,7 @@ static t_zone	*create_new_zone(int type, size_t size)
     Initialize block data and returns new zone.
 */
 
-    t_block *block = (t_block *)((char *)ptr + sizeof(t_zone));   // We are casting ptr into (char *) so we can increment byte by byte
+    t_block   *block = (t_block *)((char *)ptr + sizeof(t_zone));   // We are casting ptr into (char *) so we can increment byte by byte
 
     block->size      = zone_size - sizeof(t_zone) - sizeof(t_block);
     block->allocated = false;
@@ -132,115 +132,10 @@ static t_zone	*create_new_zone(int type, size_t size)
     block->prev      = NULL;
 
     zone->blocks = block;
+    
     return zone;
 }
 
-
-
-static void    print_zone_type(t_zone *zone)
-{
-    switch(zone->type)
-    {
-        case 0:
-            ft_putstr_fd(BGREEN, 1);
-            ft_putstr_fd("TINY : ", 1);
-            break;
-        case 1:
-            ft_putstr_fd(BGREEN, 1);
-            ft_putstr_fd("SMALL : ", 1);
-            break;
-        case 2:
-            ft_putstr_fd(BGREEN, 1);
-            ft_putstr_fd("LARGE : ", 1);
-    }
-    print_address(zone);
-    ft_putstr_fd("\n", 1);
-    ft_putstr_fd(RESET, 1);
-}
-
-
-
-void    show_alloc_mem()
-{
-    pthread_mutex_lock(&g_mutex);
-
-    size_t  allocated_bytes = 0;
-    t_zone  *tmp_zone       = g_zones;
-
-    if (g_zones == NULL)
-    {
-        ft_putstr_fd(BRED, 1);
-        ft_putstr_fd("No allocation to display\n", 1);
-        ft_putstr_fd(RESET, 1);
-        pthread_mutex_unlock(&g_mutex);
-        return;
-    }
-
-    while (tmp_zone->next)
-    {
-        tmp_zone = tmp_zone->next;
-    }
-
-    while (tmp_zone)
-    {
-        t_block *tmp_block = tmp_zone->blocks;     
-    
-        print_zone_type(tmp_zone);
-
-        while (tmp_block)
-        {
-            void    *offset_address = (void *)((char *)tmp_block + tmp_block->size);
-
-            if (tmp_block->allocated == true)
-            {
-                allocated_bytes += tmp_block->size;
-                
-                print_block(tmp_block, offset_address, tmp_block->size);
-            }
-            tmp_block = tmp_block->next;
-        }
-        tmp_zone = tmp_zone->prev;
-
-        ft_putstr_fd("\n", 1);
-    }
-
-    print_total(allocated_bytes);
-
-    pthread_mutex_unlock(&g_mutex);
-}
-
-void    show_alloc_mem_ex()
-{
-    pthread_mutex_lock(&g_mutex);
-
-    t_zone  *zone = g_zones;
-
-    if (zone == NULL)
-    {
-        pthread_mutex_unlock(&g_mutex);
-        return;
-    }
-
-    while (zone != NULL)
-    {
-        t_block *block = zone->blocks;
-
-        while (block != NULL)
-        {
-            void *data_address = (void *)((char *)block + sizeof(t_block));
-
-            if (block->allocated == true)
-            {
-                print_memory_hex(data_address, block->size);
-            }
-
-            block = block->next;
-        }
-
-        zone = zone->next;
-    }
-    pthread_mutex_unlock(&g_mutex);
-}
 
 void    fragment_block(t_block *found_block, size_t size)
 {
@@ -349,6 +244,114 @@ void    *malloc(size_t size)
 
 
 
+
+
+/***  Display Functions ***/
+
+static void    print_zone_type(t_zone *zone)
+{
+    switch(zone->type)
+    {
+        case 0:
+            ft_putstr_fd(BGREEN, 1);
+            ft_putstr_fd("TINY : ", 1);
+            break;
+        case 1:
+            ft_putstr_fd(BGREEN, 1);
+            ft_putstr_fd("SMALL : ", 1);
+            break;
+        case 2:
+            ft_putstr_fd(BGREEN, 1);
+            ft_putstr_fd("LARGE : ", 1);
+    }
+    print_address(zone);
+    ft_putstr_fd("\n", 1);
+    ft_putstr_fd(RESET, 1);
+}
+
+
+
+void    show_alloc_mem()
+{
+    pthread_mutex_lock(&g_mutex);
+
+    size_t  allocated_bytes = 0;
+    t_zone  *tmp_zone       = g_zones;
+
+    if (g_zones == NULL)
+    {
+        ft_putstr_fd(BRED, 1);
+        ft_putstr_fd("No allocation to display\n", 1);
+        ft_putstr_fd(RESET, 1);
+        pthread_mutex_unlock(&g_mutex);
+        return;
+    }
+
+    while (tmp_zone->next)
+    {
+        tmp_zone = tmp_zone->next;
+    }
+
+    while (tmp_zone)
+    {
+        t_block *tmp_block = tmp_zone->blocks;     
+    
+        print_zone_type(tmp_zone);
+
+        while (tmp_block)
+        {
+            void    *offset_address = (void *)((char *)tmp_block + tmp_block->size);
+
+            if (tmp_block->allocated == true)
+            {
+                allocated_bytes += tmp_block->size;
+                
+                print_block(tmp_block, offset_address, tmp_block->size);
+            }
+            tmp_block = tmp_block->next;
+        }
+        tmp_zone = tmp_zone->prev;
+
+        ft_putstr_fd("\n", 1);
+    }
+
+    print_total(allocated_bytes);
+
+    pthread_mutex_unlock(&g_mutex);
+}
+
+void    show_alloc_mem_ex()
+{
+    pthread_mutex_lock(&g_mutex);
+
+    t_zone  *zone = g_zones;
+
+    if (zone == NULL)
+    {
+        pthread_mutex_unlock(&g_mutex);
+        return;
+    }
+
+    while (zone != NULL)
+    {
+        t_block *block = zone->blocks;
+
+        while (block != NULL)
+        {
+            void *data_address = (void *)((char *)block + sizeof(t_block));
+
+            if (block->allocated == true)
+            {
+                print_memory_hex(data_address, block->size);
+            }
+
+            block = block->next;
+        }
+
+        zone = zone->next;
+    }
+    pthread_mutex_unlock(&g_mutex);
+}
 
 
 // +------------------+
