@@ -4,6 +4,7 @@ t_zone	       *g_zones = NULL;
 pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
+
 static size_t	align_size(size_t size) 
 {
 /*
@@ -15,6 +16,10 @@ static size_t	align_size(size_t size)
 	return (size + ALIGNEMENT - 1) & ~(ALIGNEMENT - 1);
 }
 
+static void *align_address(void *addr) 
+{
+    return (void *)(((size_t)addr + ALIGNEMENT - 1) & ~(ALIGNEMENT - 1));
+}
 
 
 static t_block	*find_block(t_zone *zone, size_t size)
@@ -50,8 +55,8 @@ static t_block	*find_block(t_zone *zone, size_t size)
 
 static size_t	get_optimal_zone_size(int type, size_t size)
 {
-    size_t  page_size = PAGE_SIZE;
-    size_t  zone_size;
+    size_t page_size = PAGE_SIZE;
+    size_t zone_size;
 
 /*
     Find right zone size according to the type of allocation.
@@ -95,7 +100,7 @@ static t_zone	*create_new_zone(int type, size_t size)
     Initialize a new t_zone.
 */
 
-    size_t  zone_size = get_optimal_zone_size(type, size);
+    size_t zone_size = get_optimal_zone_size(type, size);
 
     void *ptr = mmap(NULL, zone_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
@@ -124,7 +129,7 @@ static t_zone	*create_new_zone(int type, size_t size)
     Initialize block data and returns new zone.
 */
 
-    t_block   *block = (t_block *)((char *)ptr + sizeof(t_zone));   // We are casting ptr into (char *) so we can increment byte by byte
+    t_block *block = (t_block *)align_address((char *)ptr + sizeof(t_zone));   // We are casting ptr into (char *) so we can increment byte by byte
 
     block->size      = zone_size - sizeof(t_zone) - sizeof(t_block);
     block->allocated = false;
@@ -132,9 +137,9 @@ static t_zone	*create_new_zone(int type, size_t size)
     block->prev      = NULL;
 
     zone->blocks = block;
-    
     return zone;
 }
+
 
 
 void    fragment_block(t_block *found_block, size_t size)
@@ -144,13 +149,13 @@ void    fragment_block(t_block *found_block, size_t size)
     If a block found allocated is larger than asked, this function fragment the block in 2 to get a second block that
     could be used later wihtout impacting the initial allocation asked by the user.
 */
-
-    t_block *new_block   = (t_block *)((char *)found_block + sizeof(t_block) + size);
+    void    *new_block_addr = (void *)((char *)found_block + sizeof(t_block) + size);
+    t_block *new_block      = (t_block *)align_address(new_block_addr);
     
-    new_block->size      = found_block->size - size - sizeof(t_block);
-    new_block->allocated = false;
-    new_block->next      = found_block->next;
-    new_block->prev      = found_block;
+    new_block->size         = found_block->size - size - sizeof(t_block);
+    new_block->allocated    = false;
+    new_block->next         = found_block->next;
+    new_block->prev         = found_block;
 
     if (new_block->next)  // If not the last block in list make the next prev pointer point on the right block
     {
@@ -245,8 +250,7 @@ void    *malloc(size_t size)
 
 
 
-
-/***  Display Functions ***/
+/*** Display Functions ***/
 
 static void    print_zone_type(t_zone *zone)
 {
@@ -268,7 +272,6 @@ static void    print_zone_type(t_zone *zone)
     ft_putstr_fd("\n", 1);
     ft_putstr_fd(RESET, 1);
 }
-
 
 
 void    show_alloc_mem()
@@ -352,6 +355,7 @@ void    show_alloc_mem_ex()
     }
     pthread_mutex_unlock(&g_mutex);
 }
+
 
 
 // +------------------+
