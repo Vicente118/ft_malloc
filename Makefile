@@ -32,7 +32,6 @@ $(NAME) : $(OBJS) $(LIBFT)
 	$(CC) $(CFLAGS) -o $(NAME) $(OBJS) -L./libft -lft
 	$(RM) $(LINK)
 	ln -s $(NAME) $(LINK)
-	export LD_LIBRARY_PATH=.
 
 %.o : %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
