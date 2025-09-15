@@ -7,6 +7,7 @@
 # include <sys/resource.h>
 # include <pthread.h>
 # include <stdint.h> 
+# include <stdbool.h>
 # include "../libft/libft.h"
 
 # define ALIGNEMENT    		16			 	      // malloc from glibc is aligned to 16 bytes (Most optimal on 64 bits systems)
@@ -25,12 +26,6 @@
 # define BCYAN         		"\033[96m"
 # define BWHITE        		"\033[97m"
 # define RESET         		"\033[0m"
-
-typedef enum bool
-{
-	false = 0,
-	true  = 1
-}	bool;
 
 enum
 {
