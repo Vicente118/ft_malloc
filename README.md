@@ -45,7 +45,7 @@ IX. [Acknowledgments](#acknowledgments)<br>
 
 ## Overview
 
-FT_MALLOC is a custom heap allocator written in C that re-implements the standard allocation API: malloc, realloc, and free. Instead of relying on the system allocator, it manages memory directly using the mmap and munmap system calls and exposes debugging helpers to visualize the heap.
+ft_malloc is a custom heap allocator written in C that re-implements the standard allocation API: malloc, realloc, and free. Instead of relying on the system allocator, it manages memory directly using the mmap and munmap system calls and exposes debugging helpers to visualize the heap.
 
 Design at a glance:
 - Memory is grouped into zones of three classes:
@@ -53,7 +53,6 @@ Design at a glance:
   - SMALL: allocations up to 16 KiB
   - LARGE: allocations larger than SMALL
 - Zones are obtained from the kernel with mmap. TINY and SMALL zones contain many blocks; LARGE allocations get their own dedicated mapping.
-- Every user allocation resides in a block preceded by a small header that tracks size, allocation status, and links to neighboring blocks. Blocks inside a zone form a doubly linked list.
 - A global doubly linked list chains all zones. A single global mutex protects all allocator operations to provide thread safety.
 - All returned pointers are 16-byte aligned, matching common ABI requirements on 64-bit systems.
 
@@ -71,13 +70,6 @@ Allocation strategy:
 Debugging and visibility:
 - show_alloc_mem and show_alloc_mem_ex inspect the allocator state and print a human-readable summary of zones and blocks.
 - print_memory_hex provides a hex-dump utility for inspecting memory contents.
-
-You can find diagrams under diagram/ illustrating zones and blocks:
-- diagram/diagram.png
-- diagram/malloc_detailed_visualization.png
-- diagram/ZonesAndBlocks.jpg
-
-This project is a learning-focused, self-contained allocator. While it mirrors key ideas used by production allocators (size classes, splitting/merging, dedicated large mappings, alignment, and synchronization), it is intentionally compact and readable for study and experimentation.
 
 ---
 
