@@ -45,13 +45,59 @@ IX. [Acknowledgments](#acknowledgments)<br>
 
 ## Overview
 
+FT_MALLOC is a custom heap allocator written in C that re-implements the standard allocation API: malloc, realloc, and free. Instead of relying on the system allocator, it manages memory directly using the mmap and munmap system calls and exposes debugging helpers to visualize the heap.
 
+Design at a glance:
+- Memory is grouped into zones of three classes:
+  - TINY: allocations up to 1024 bytes
+  - SMALL: allocations up to 16 KiB
+  - LARGE: allocations larger than SMALL
+- Zones are obtained from the kernel with mmap. TINY and SMALL zones contain many blocks; LARGE allocations get their own dedicated mapping.
+- Every user allocation resides in a block preceded by a small header that tracks size, allocation status, and links to neighboring blocks. Blocks inside a zone form a doubly linked list.
+- A global doubly linked list chains all zones. A single global mutex protects all allocator operations to provide thread safety.
+- All returned pointers are 16-byte aligned, matching common ABI requirements on 64-bit systems.
+
+Core data structures:
+- struct s_zone (type, total_size, blocks, next/prev): describes a mapped region and its block list.
+- struct s_block (size, allocated, next/prev): describes a single allocation payload.
+- Global symbols: g_zones (head of all zones), g_mutex (allocator-wide lock).
+
+Allocation strategy:
+- First-fit search within the appropriate zone class.
+- Blocks are split when a free block is larger than needed.
+- On free, adjacent free blocks are coalesced to reduce fragmentation.
+- LARGE allocations are unmapped immediately on free, returning memory to the OS.
+
+Debugging and visibility:
+- show_alloc_mem and show_alloc_mem_ex inspect the allocator state and print a human-readable summary of zones and blocks.
+- print_memory_hex provides a hex-dump utility for inspecting memory contents.
+
+You can find diagrams under diagram/ illustrating zones and blocks:
+- diagram/diagram.png
+- diagram/malloc_detailed_visualization.png
+- diagram/ZonesAndBlocks.jpg
+
+This project is a learning-focused, self-contained allocator. While it mirrors key ideas used by production allocators (size classes, splitting/merging, dedicated large mappings, alignment, and synchronization), it is intentionally compact and readable for study and experimentation.
 
 ---
 
 ## Features
 
-<code>❯ REPLACE-ME</code>
+- Drop-in replacements for:
+  - malloc(size_t size)
+  - realloc(void* ptr, size_t size)
+  - free(void* ptr)
+- Backed by mmap/munmap with no dependency on the system malloc.
+- Size classes for better locality and reduced overhead:
+  - TINY (<= 1024 bytes), SMALL (<= 16 KiB), LARGE (> 16 KiB).
+- 16-byte alignment for all returned pointers on 64-bit systems.
+- Block splitting and coalescing to mitigate fragmentation.
+- Dedicated mappings for LARGE allocations to reduce waste and speed up free.
+- Thread-safe with a single global pthread mutex.
+- Introspection utilities:
+  - show_alloc_mem and show_alloc_mem_ex to print allocator state.
+  - print_memory_hex for hex dumps of memory regions.
+- Clear in-repo diagrams and a compact codebase to facilitate learning.
 
 ---
 
@@ -403,25 +449,25 @@ IX. [Acknowledgments](#acknowledgments)<br>
 
 This project requires the following dependencies:
 
-- **Programming Language:** C
+- Programming Language: C
 
 ### Installation
 
-Build ft_malloc from the source and intsall dependencies:
+Build ft_malloc from source and install dependencies:
 
-1. **Clone the repository:**
+1. Clone the repository:
 
     ```sh
     ❯ git clone https://github.com/Vicente118/ft_malloc
     ```
 
-2. **Navigate to the project directory:**
+2. Navigate to the project directory:
 
     ```sh
     ❯ cd ft_malloc
     ```
 
-3. **Compile the project**
+3. Compile the project
 
 	```sh
  	❯ make
