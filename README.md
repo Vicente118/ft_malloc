@@ -89,8 +89,7 @@ Debugging and visibility:
 - Introspection utilities:
   - show_alloc_mem and show_alloc_mem_ex to print allocator state.
   - print_memory_hex for hex dumps of memory regions.
-- Clear in-repo diagrams and a compact codebase to facilitate learning.
-
+    
 ---
 
 ## Project Structure
@@ -445,7 +444,7 @@ This project requires the following dependencies:
 
 ### Installation
 
-Build ft_malloc from source and install dependencies:
+Build ft_malloc from source:
 
 1. Clone the repository:
 
