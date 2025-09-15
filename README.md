@@ -35,11 +35,6 @@ V. [Getting Started](#getting-started)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;V.a. [Prerequisites](#prerequisites)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;V.b. [Installation](#installation)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;V.c. [Usage](#usage)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;V.d. [Testing](#testing)<br>
-VI. [Roadmap](#roadmap)<br>
-VII. [Contributing](#contributing)<br>
-VIII. [License](#license)<br>
-IX. [Acknowledgments](#acknowledgments)<br>
 
 ---
 
