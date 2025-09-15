@@ -30,7 +30,6 @@ I. [Table of Contents](#table-of-contents)<br>
 II. [Overview](#overview)<br>
 III. [Features](#features)<br>
 IV. [Project Structure](#project-structure)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;IV.a. [Project Index](#project-index)<br>
 V. [Getting Started](#getting-started)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;V.a. [Prerequisites](#prerequisites)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;V.b. [Installation](#installation)<br>
